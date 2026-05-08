@@ -1,0 +1,13 @@
+PLACEHOLDER — gerar este PNG a partir de arquitetura.mermaid
+
+Passos:
+1. Abra https://mermaid.live no navegador.
+2. Cole o conteúdo de docs/arquitetura.mermaid no editor à esquerda.
+3. Aguarde o preview renderizar à direita.
+4. Clique em "Actions" → "Download PNG" (ou "PNG" no menu superior).
+5. Substitua este arquivo placeholder pelo PNG baixado, mantendo o nome
+   docs/arquitetura.png.
+
+Obs.: este arquivo é um placeholder de texto porque a geração local de PNG
+exige toolchain Node.js + mermaid-cli (mmdc) que não está garantido no
+ambiente do avaliador. O arquivo .mermaid é a fonte canônica do diagrama.

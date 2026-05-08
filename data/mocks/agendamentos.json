@@ -1,0 +1,47 @@
+{
+  "medicos_disponiveis": {
+    "clinica_geral": [
+      {"nome": "Dra. Helena Castro Fictícia", "crm": "CRM-SP 000111"},
+      {"nome": "Dr. Bruno Aguiar Fictício", "crm": "CRM-SP 000222"}
+    ],
+    "cardiologia": [
+      {"nome": "Dr. Renato Borges Fictício", "crm": "CRM-SP 000333"}
+    ],
+    "dermatologia": [
+      {"nome": "Dra. Patrícia Mendes Fictícia", "crm": "CRM-RJ 000444"}
+    ],
+    "ortopedia": [
+      {"nome": "Dr. Felipe Ramos Fictício", "crm": "CRM-SP 000555"}
+    ],
+    "psiquiatria": [
+      {"nome": "Dra. Camila Tavares Fictícia", "crm": "CRM-MG 000666"}
+    ],
+    "ginecologia": [
+      {"nome": "Dra. Aline Soares Fictícia", "crm": "CRM-SP 000777"}
+    ],
+    "endocrinologia": [
+      {"nome": "Dr. Rogério Pinto Fictício", "crm": "CRM-RS 000888"}
+    ],
+    "pediatria": [
+      {"nome": "Dra. Sofia Almeida Fictícia", "crm": "CRM-SP 000999"}
+    ],
+    "nutricao": [
+      {"nome": "Lúcia Ferraz Fictícia", "crn": "CRN-3 0001234"}
+    ]
+  },
+  "horarios_modelo": {
+    "alta": "primeiro horário disponível em até 60 minutos via teleconsulta",
+    "media": "primeiro horário disponível nas próximas 24 horas",
+    "baixa": "horários nos próximos 7 dias úteis"
+  },
+  "template_link": "https://teleconsulta.careplus.com.br/sessao/{id_consulta}",
+  "agendamentos_existentes": [
+    {
+      "id_consulta": "TC-2026-05-07-00891",
+      "beneficiario_id": "BENEF-001",
+      "especialidade": "cardiologia",
+      "data_horario": "2026-05-12T15:30:00-03:00",
+      "status": "confirmado"
+    }
+  ]
+}

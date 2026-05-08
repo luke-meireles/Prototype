@@ -1,0 +1,52 @@
+{
+  "BENEF-001": {
+    "fonte": "Apple Health",
+    "ultima_sincronizacao": "2026-05-06T22:14:00-03:00",
+    "periodo_dias": 7,
+    "frequencia_cardiaca_bpm": {"media": 78, "minima": 56, "maxima": 132},
+    "spo2_percent": {"media": 96, "minima": 93, "maxima": 99},
+    "passos_diarios": [6841, 7412, 5230, 8120, 4321, 9012, 7600],
+    "qualidade_sono": {
+      "media_horas": 6.2,
+      "ciclos_rem_pct": 18,
+      "interrupcoes_noite": 2.1
+    },
+    "variabilidade_cardiaca_ms": {"media": 32, "tendencia": "estavel"},
+    "alertas_detectados": [
+      {"tipo": "fc_repouso_elevada", "valor": 88, "data": "2026-05-04", "severidade": "leve"}
+    ]
+  },
+  "BENEF-002": {
+    "fonte": "Apple Health",
+    "ultima_sincronizacao": "2026-05-07T07:30:00-03:00",
+    "periodo_dias": 7,
+    "frequencia_cardiaca_bpm": {"media": 72, "minima": 58, "maxima": 145},
+    "spo2_percent": {"media": 97, "minima": 94, "maxima": 99},
+    "passos_diarios": [9210, 10330, 8800, 11200, 7600, 12100, 9500],
+    "qualidade_sono": {
+      "media_horas": 7.4,
+      "ciclos_rem_pct": 22,
+      "interrupcoes_noite": 1.0
+    },
+    "variabilidade_cardiaca_ms": {"media": 51, "tendencia": "melhorando"},
+    "alertas_detectados": []
+  },
+  "BENEF-003": {
+    "fonte": "Apple Health",
+    "ultima_sincronizacao": "2026-05-07T05:45:00-03:00",
+    "periodo_dias": 7,
+    "frequencia_cardiaca_bpm": {"media": 88, "minima": 64, "maxima": 152},
+    "spo2_percent": {"media": 94, "minima": 89, "maxima": 97},
+    "passos_diarios": [2100, 1840, 2300, 1500, 2800, 1900, 2250],
+    "qualidade_sono": {
+      "media_horas": 5.4,
+      "ciclos_rem_pct": 14,
+      "interrupcoes_noite": 3.6
+    },
+    "variabilidade_cardiaca_ms": {"media": 18, "tendencia": "piorando"},
+    "alertas_detectados": [
+      {"tipo": "spo2_baixa", "valor": 89, "data": "2026-05-05", "severidade": "moderada"},
+      {"tipo": "ritmo_irregular_suspeito", "valor": "FA paroxística suspeita", "data": "2026-05-06", "severidade": "alta"}
+    ]
+  }
+}

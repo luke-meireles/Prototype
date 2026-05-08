@@ -1,0 +1,34 @@
+# Segredos e configuração local
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+
+# Notebooks Jupyter
+.ipynb_checkpoints/
+
+# Logs estruturados
+logs/*.json
+logs/*.log
+
+# Banco de dados vetorial (regenerável)
+chroma_db/
+.chroma/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp

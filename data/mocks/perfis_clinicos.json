@@ -1,0 +1,82 @@
+{
+  "BENEF-001": {
+    "beneficiario_id": "BENEF-001",
+    "nome": "João Silva Fictício",
+    "data_nascimento": "1967-03-12",
+    "idade": 58,
+    "sexo": "masculino",
+    "plano": "Care Plus Premium",
+    "condicoes_cronicas": [
+      "Hipertensão arterial sistêmica estágio 2",
+      "Dislipidemia mista",
+      "Sobrepeso (IMC 28,4)"
+    ],
+    "alergias": [
+      "Dipirona (urticária leve)"
+    ],
+    "medicamentos_em_uso": [
+      {"principio_ativo": "losartana", "dose": "50 mg", "posologia": "1x/dia, manhã"},
+      {"principio_ativo": "atorvastatina", "dose": "20 mg", "posologia": "1x/dia, noite"},
+      {"principio_ativo": "AAS", "dose": "100 mg", "posologia": "1x/dia, manhã"}
+    ],
+    "ultimas_consultas": [
+      {"data": "2026-02-14", "especialidade": "cardiologia", "motivo": "controle pressórico", "conduta": "manutenção da medicação"},
+      {"data": "2025-11-03", "especialidade": "clinica_geral", "motivo": "check-up anual", "conduta": "solicitação de perfil lipídico"},
+      {"data": "2025-08-22", "especialidade": "nutrição", "motivo": "orientação dietética", "conduta": "plano alimentar DASH"}
+    ]
+  },
+  "BENEF-002": {
+    "beneficiario_id": "BENEF-002",
+    "nome": "Maria Souza Fictícia",
+    "data_nascimento": "1991-07-25",
+    "idade": 34,
+    "sexo": "feminino",
+    "plano": "Care Plus Essencial",
+    "condicoes_cronicas": [
+      "Asma brônquica leve persistente",
+      "Rinite alérgica"
+    ],
+    "alergias": [
+      "Penicilinas (rash cutâneo)",
+      "Ácaros e poeira doméstica"
+    ],
+    "medicamentos_em_uso": [
+      {"principio_ativo": "salbutamol", "dose": "100 mcg", "posologia": "spray, sob demanda"},
+      {"principio_ativo": "budesonida + formoterol", "dose": "200/6 mcg", "posologia": "1 inalação 2x/dia"},
+      {"principio_ativo": "loratadina", "dose": "10 mg", "posologia": "1x/dia em crises sazonais"}
+    ],
+    "ultimas_consultas": [
+      {"data": "2026-03-20", "especialidade": "pneumologia", "motivo": "revisão asma", "conduta": "manutenção do esquema combinado"},
+      {"data": "2025-12-10", "especialidade": "ginecologia", "motivo": "consulta de rotina", "conduta": "exames de rotina solicitados"},
+      {"data": "2025-09-04", "especialidade": "clinica_geral", "motivo": "quadro gripal", "conduta": "manejo sintomático"}
+    ]
+  },
+  "BENEF-003": {
+    "beneficiario_id": "BENEF-003",
+    "nome": "Carlos Lima Fictício",
+    "data_nascimento": "1953-11-30",
+    "idade": 72,
+    "sexo": "masculino",
+    "plano": "Care Plus Sênior",
+    "condicoes_cronicas": [
+      "Fibrilação atrial paroxística",
+      "Insuficiência cardíaca classe II NYHA",
+      "Diabetes mellitus tipo 2",
+      "Doença renal crônica estágio 3"
+    ],
+    "alergias": [
+      "Iodo (contraste radiológico — reação moderada prévia)"
+    ],
+    "medicamentos_em_uso": [
+      {"principio_ativo": "varfarina", "dose": "5 mg", "posologia": "1x/dia, dose ajustada por INR"},
+      {"principio_ativo": "metoprolol", "dose": "50 mg", "posologia": "2x/dia"},
+      {"principio_ativo": "metformina", "dose": "850 mg", "posologia": "2x/dia com refeições"},
+      {"principio_ativo": "furosemida", "dose": "40 mg", "posologia": "1x/dia, manhã"}
+    ],
+    "ultimas_consultas": [
+      {"data": "2026-04-05", "especialidade": "cardiologia", "motivo": "controle anticoagulação", "conduta": "INR 2,4 — manter dose"},
+      {"data": "2026-01-18", "especialidade": "endocrinologia", "motivo": "controle glicêmico", "conduta": "HbA1c 7,1 — ajuste alimentar"},
+      {"data": "2025-10-27", "especialidade": "nefrologia", "motivo": "monitoramento DRC", "conduta": "TFG estável — controle trimestral"}
+    ]
+  }
+}

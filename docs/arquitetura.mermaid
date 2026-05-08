@@ -1,0 +1,45 @@
+%% Arquitetura BluaDiagnostics — Sprint 1
+%% Para gerar PNG: cole o conteúdo deste arquivo em https://mermaid.live
+%% e exporte como PNG (botão "Actions → Download PNG"). Salve como
+%% docs/arquitetura.png.
+
+flowchart TD
+    Usuario([Usuário Care Plus<br/>via app Blua]) --> Guardrails[Guardrails de Entrada<br/>filtros LGPD + sanitização]
+    Guardrails --> Roteador{Roteador de Intenção<br/>Qwen 3.5 thinking=OFF}
+
+    Roteador -->|checkup| Checkup[Agente Check-up<br/>thinking=OFF]
+    Roteador -->|triagem_sintoma| Triagem[Agente Triagem<br/>thinking=ON]
+    Roteador -->|prescricao| Prescricao[Agente Prescrição<br/>thinking=ON]
+    Roteador -->|duvida_geral| Duvida[Resposta Educacional]
+    Roteador -->|fora_escopo| ForaEscopo[Recusa cordial]
+
+    Checkup --> Tools1[(Tools<br/>histórico, wearable)]
+    Triagem --> RAG[(ChromaDB<br/>multilingual-e5-large)]
+    Triagem --> Tools2[(Tools<br/>classificar_risco, agendar)]
+    Prescricao --> RAG
+    Prescricao --> Tools3[(Tools<br/>histórico, interações)]
+
+    Tools1 --> Safety
+    Tools2 --> Safety
+    Tools3 --> Safety
+    RAG --> Safety
+    Duvida --> Safety
+    ForaEscopo --> Safety
+
+    Safety{Safety Layer<br/>thinking=OFF<br/>JSON estruturado}
+    Safety -->|aprovado| Resposta[Resposta ao usuário<br/>+ disclaimer]
+    Safety -->|reprovado| Regenerar[Regenerar / Escalada Humana]
+
+    Resposta --> Audit[(Audit Log<br/>JSON estruturado<br/>structlog)]
+    Regenerar --> Audit
+    Audit --> Fim([Fim do turno])
+
+    classDef agente fill:#0b5cff,stroke:#06348f,color:#fff
+    classDef store fill:#e6f4ea,stroke:#34a853,color:#0b5b1c
+    classDef safety fill:#fff4ce,stroke:#f29900,color:#5f4500
+    classDef terminal fill:#f1f3f4,stroke:#5f6368,color:#202124
+
+    class Roteador,Checkup,Triagem,Prescricao,Duvida,ForaEscopo agente
+    class RAG,Tools1,Tools2,Tools3,Audit store
+    class Safety,Regenerar safety
+    class Usuario,Fim,Guardrails,Resposta terminal

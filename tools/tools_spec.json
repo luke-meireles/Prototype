@@ -1,0 +1,126 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_historico_paciente",
+      "description": "Consulta o histórico clínico estruturado de um beneficiário Care Plus, incluindo condições crônicas, alergias, medicamentos em uso e últimas três consultas. Use sempre antes de discutir medicação ou conduta clínica.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "beneficiario_id": {
+            "type": "string",
+            "description": "Identificador único do beneficiário no formato BENEF-XXX"
+          }
+        },
+        "required": ["beneficiario_id"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "verificar_interacoes_medicamentosas",
+      "description": "Verifica interações entre dois ou mais medicamentos. Retorna severidade e recomendação. Use sempre que o usuário mencionar uso simultâneo de fármacos ou perguntar sobre adicionar um novo remédio.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "medicamentos": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Lista de princípios ativos ou nomes comerciais a verificar (mínimo 2)"
+          }
+        },
+        "required": ["medicamentos"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "agendar_teleconsulta",
+      "description": "Agenda uma teleconsulta Care Plus com a especialidade indicada. Retorna confirmação com link, médico atribuído e horário.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "especialidade": {
+            "type": "string",
+            "description": "Especialidade médica desejada (ex: clinica_geral, cardiologia, dermatologia)"
+          },
+          "data_preferencia": {
+            "type": "string",
+            "description": "Data preferida no formato ISO 8601 (YYYY-MM-DD)"
+          },
+          "urgencia": {
+            "type": "string",
+            "enum": ["baixa", "media", "alta"],
+            "description": "Nível de urgência clínica do agendamento"
+          }
+        },
+        "required": ["especialidade", "data_preferencia", "urgencia"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_sinais_vitais_wearable",
+      "description": "Recupera os sinais vitais coletados pelo wearable do beneficiário (Apple Health/Google Fit) no período solicitado. Inclui FC, SpO2, passos, qualidade do sono e variabilidade cardíaca.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "beneficiario_id": {
+            "type": "string",
+            "description": "Identificador único do beneficiário"
+          },
+          "periodo_dias": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30,
+            "description": "Janela retroativa em dias a consultar (1 a 30)"
+          }
+        },
+        "required": ["beneficiario_id", "periodo_dias"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "classificar_risco_clinico",
+      "description": "Classifica o risco clínico do beneficiário aplicando lógica determinística inspirada no Protocolo de Manchester. Retorna nível, cor Manchester, especialidade sugerida e tempo recomendado de atendimento. Não substitui avaliação médica.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sintomas": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Lista de sintomas relatados pelo paciente"
+          },
+          "sinais_vitais": {
+            "type": "object",
+            "description": "Objeto com chaves opcionais: fc, pa_sistolica, pa_diastolica, spo2, temperatura, fr",
+            "properties": {
+              "fc": {"type": "number"},
+              "pa_sistolica": {"type": "number"},
+              "pa_diastolica": {"type": "number"},
+              "spo2": {"type": "number"},
+              "temperatura": {"type": "number"},
+              "fr": {"type": "number"}
+            }
+          },
+          "idade": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 120
+          },
+          "comorbidades": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Lista de comorbidades conhecidas do paciente"
+          }
+        },
+        "required": ["sintomas", "sinais_vitais", "idade", "comorbidades"]
+      }
+    }
+  }
+]

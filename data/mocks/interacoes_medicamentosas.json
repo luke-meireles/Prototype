@@ -1,0 +1,66 @@
+{
+  "interacoes": [
+    {
+      "par": ["varfarina", "aas"],
+      "severidade": "alta",
+      "descricao": "Aumento significativo do risco de sangramento gastrointestinal e intracraniano por sinergismo antiplaquetário e anticoagulante.",
+      "recomendacao": "Evitar associação. Se imprescindível, monitorar INR e sinais de sangramento; preferir avaliação cardiológica para ajuste do regime."
+    },
+    {
+      "par": ["imao", "isrs"],
+      "severidade": "contraindicada",
+      "descricao": "Risco de síndrome serotoninérgica grave (hipertermia, rigidez, alteração mental).",
+      "recomendacao": "Associação contraindicada. Respeitar washout mínimo de 14 dias entre os agentes."
+    },
+    {
+      "par": ["sildenafil", "nitratos"],
+      "severidade": "contraindicada",
+      "descricao": "Hipotensão grave e potencialmente fatal por potencialização vasodilatadora.",
+      "recomendacao": "Associação contraindicada em qualquer dose. Procurar alternativa terapêutica."
+    },
+    {
+      "par": ["fluoxetina", "tramadol"],
+      "severidade": "alta",
+      "descricao": "Aumento do risco de síndrome serotoninérgica e redução do limiar convulsivo.",
+      "recomendacao": "Evitar a combinação. Se necessária analgesia, considerar opioides com menor ação serotoninérgica e revisão pelo médico assistente."
+    },
+    {
+      "par": ["litio", "aines"],
+      "severidade": "moderada",
+      "descricao": "AINEs reduzem a depuração renal do lítio, elevando a litemia e o risco de toxicidade.",
+      "recomendacao": "Preferir paracetamol como analgésico. Se uso de AINE for necessário, monitorar litemia em 5 a 7 dias."
+    },
+    {
+      "par": ["claritromicina", "sinvastatina"],
+      "severidade": "alta",
+      "descricao": "Inibição do CYP3A4 com aumento de exposição à sinvastatina e risco de rabdomiólise.",
+      "recomendacao": "Suspender temporariamente a sinvastatina durante o curso de claritromicina ou trocar para azitromicina/pravastatina."
+    },
+    {
+      "par": ["alopurinol", "azatioprina"],
+      "severidade": "alta",
+      "descricao": "Inibição da xantina oxidase aumenta a exposição à azatioprina, com risco de mielotoxicidade grave.",
+      "recomendacao": "Reduzir dose de azatioprina em 50–75% e monitorar hemograma semanalmente nas primeiras semanas."
+    },
+    {
+      "par": ["metformina", "contraste_iodado"],
+      "severidade": "moderada",
+      "descricao": "Risco de acidose lática em pacientes com função renal limítrofe quando expostos a contraste iodado.",
+      "recomendacao": "Suspender metformina no dia do exame e por 48 horas após, com reavaliação de creatinina."
+    },
+    {
+      "par": ["varfarina", "amiodarona"],
+      "severidade": "alta",
+      "descricao": "Amiodarona inibe metabolismo da varfarina, elevando INR e risco de sangramento.",
+      "recomendacao": "Reduzir dose de varfarina em 30–50% e monitorar INR semanalmente até estabilização."
+    },
+    {
+      "par": ["digoxina", "furosemida"],
+      "severidade": "moderada",
+      "descricao": "Hipocalemia induzida por furosemida potencializa toxicidade digitálica.",
+      "recomendacao": "Monitorar potássio e magnésio séricos; suplementar conforme necessário e observar sinais de intoxicação."
+    }
+  ],
+  "observacoes": "Esta base é mockada e simplificada para demonstração. Em produção, deve integrar a uma fonte oficial (Micromedex, UpToDate, ANVISA) com versionamento e auditoria.",
+  "fonte_didatica": "Conteúdo elaborado para fins acadêmicos a partir de conhecimento médico amplamente difundido. Não usar para decisão clínica real."
+}
