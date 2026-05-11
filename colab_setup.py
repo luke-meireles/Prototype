@@ -21,7 +21,7 @@ from typing import Any
 _MODELO_DASHSCOPE = "qwen-plus"
 _MODELO_OLLAMA = "qwen:9b"
 
-_REPO_URL_PADRAO = "https://github.com/luke-meireles/bluadiagnostics.git"
+_REPO_URL_PADRAO = "https://github.com/luke-meireles/Prototype.git"
 
 
 def em_colab() -> bool:
