@@ -1,4 +1,8 @@
-"""Tool: verificação de interações medicamentosas (mockado)."""
+"""Tool: verificação de interações medicamentosas (mockado).
+
+Compara todos os pares da lista contra a base mockada. Em produção,
+integraria com UpToDate, Micromedex ou a base de bulas da ANVISA.
+"""
 
 from __future__ import annotations
 
@@ -21,6 +25,8 @@ class InteracoesInput(BaseModel):
     @field_validator("medicamentos")
     @classmethod
     def _normaliza(cls, v: list[str]) -> list[str]:
+        # trim + lowercase + espaço→underscore. Em produção, usar um
+        # normalizador clínico de verdade (RxNorm / SNOMED CT).
         return [m.strip().lower().replace(" ", "_") for m in v]
 
 
@@ -30,11 +36,7 @@ def _carregar_base() -> list[dict[str, Any]]:
 
 
 def verificar_interacoes_medicamentosas(medicamentos: list[str]) -> dict[str, Any]:
-    """Verifica interações entre os medicamentos informados.
-
-    Compara todos os pares possíveis contra a base mockada e retorna a maior
-    severidade encontrada, junto da lista completa de interações.
-    """
+    """Retorna a maior severidade encontrada entre pares de medicamentos."""
     payload = InteracoesInput(medicamentos=medicamentos)
     lista_normalizada = payload.medicamentos
     base = _carregar_base()

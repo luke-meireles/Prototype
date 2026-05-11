@@ -6,7 +6,8 @@ from src.tools.agendamento import agendar_teleconsulta
 from src.tools.wearable import consultar_sinais_vitais_wearable
 from src.tools.classificador_risco import classificar_risco_clinico
 
-# Mapeamento usado pelo executor de tool calls do LangGraph
+# Dispatch table consumida pelos nós do grafo:
+#   TOOL_REGISTRY[nome](**args)
 TOOL_REGISTRY = {
     "consultar_historico_paciente": consultar_historico_paciente,
     "verificar_interacoes_medicamentosas": verificar_interacoes_medicamentosas,

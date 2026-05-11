@@ -1,7 +1,13 @@
 # Configuração on-prem do BluaDiagnostics com Ollama
 
+> **Importante**: o projeto BluaDiagnostics foi escrito **para o Google
+> Colab**. Esta pasta documenta o modo on-prem (Ollama) apenas como
+> **alternativa fora do Colab** — clientes corporativos com isolamento
+> total ou ambientes de contingência. **Não funciona no Colab gratuito**
+> porque o runtime não suporta servidor Ollama persistente.
+
 Esta pasta contém o `Modelfile` que materializa a Configuração B (on-prem)
-do BluaDiagnostics: o mesmo Qwen 3.5 9B servido localmente via
+do BluaDiagnostics: o mesmo Qwen 9B servido localmente via
 [Ollama](https://ollama.com), com o system prompt principal embutido.
 
 ## Por que on-prem?
@@ -15,14 +21,14 @@ e necessidade de GPU local. Mais detalhes em [`/docs/deployment_modes.md`](../do
 ## Pré-requisitos
 
 - Ollama instalado (versão ≥ 0.3.0).
-- GPU com pelo menos 12 GB de VRAM recomendada para qwen3.5:9b. Em CPU,
+- GPU com pelo menos 12 GB de VRAM recomendada para qwen:9b. Em CPU,
   funciona, porém com latência elevada.
 
 ## Setup
 
 ```bash
 # 1. Baixe o modelo base
-ollama pull qwen3.5:9b
+ollama pull qwen:9b
 
 # 2. Crie a variante BluaDiagnostics com o system prompt embutido
 ollama create blua-qwen -f Modelfile
@@ -37,7 +43,7 @@ Defina as variáveis de ambiente:
 
 ```bash
 export OLLAMA_BASE_URL=http://localhost:11434/v1
-export QWEN_OLLAMA_MODEL=blua-qwen   # ou qwen3.5:9b se preferir
+export QWEN_OLLAMA_MODEL=blua-qwen   # ou qwen:9b se preferir
 ```
 
 E no código consumidor, chame `chat(..., backend="ollama")` ou use

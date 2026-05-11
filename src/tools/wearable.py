@@ -1,4 +1,9 @@
-"""Tool: leitura de sinais vitais do wearable (mockado)."""
+"""Tool: leitura de sinais vitais do wearable (mockado).
+
+Em produção, integraria com Apple Health / Google Fit / Fitbit via OAuth.
+``periodo_dias`` é restrito a 1..30 para refletir o limite de retenção
+típico desses provedores.
+"""
 
 from __future__ import annotations
 
@@ -24,11 +29,7 @@ def _carregar_mock() -> dict[str, Any]:
 def consultar_sinais_vitais_wearable(
     beneficiario_id: str, periodo_dias: int
 ) -> dict[str, Any]:
-    """Retorna o snapshot mockado de sinais vitais do wearable.
-
-    O mock guarda registros de 7 dias; quando o pedido é menor, recortamos a
-    lista de passos retroativamente para refletir a janela.
-    """
+    """Retorna o snapshot mockado de sinais vitais do wearable."""
     WearableInput(beneficiario_id=beneficiario_id, periodo_dias=periodo_dias)
 
     base = _carregar_mock()

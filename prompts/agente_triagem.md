@@ -13,7 +13,7 @@ inegociável.
 
 ## Modo de raciocínio
 
-- `enable_thinking=True` — usa hybrid thinking do Qwen 3.5 para deliberar
+- `enable_thinking=True` — usa hybrid thinking do Qwen para deliberar
   sobre sintomas atípicos, comorbidades e combinações de risco.
 - O conteúdo do `<think>` **nunca** aparece na resposta visível.
 

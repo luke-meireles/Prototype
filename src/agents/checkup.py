@@ -1,4 +1,10 @@
-"""Agente Check-up — coleta estruturada de sintomas e sinais vitais."""
+"""Agente Check-up — coleta estruturada de sintomas e sinais vitais.
+
+Primeiro contato com o paciente: monta um dossiê de queixas, idade,
+comorbidades e sinais vitais que depois alimenta a Triagem. Sem RAG,
+sem thinking, temperature 0.4 (conversa mais empática). Tools
+permitidas: `consultar_historico_paciente` e `consultar_sinais_vitais_wearable`.
+"""
 
 from __future__ import annotations
 
@@ -12,14 +18,14 @@ _PROMPTS_DIR = Path(__file__).resolve().parents[2] / "prompts"
 
 
 def _carregar_prompts() -> str:
-    """Compõe o system prompt: principal + sub-prompt do agente."""
+    """Concatena o system prompt global com o sub-prompt do agente."""
     principal = (_PROMPTS_DIR / "system_prompt.md").read_text(encoding="utf-8")
     sub = (_PROMPTS_DIR / "agente_checkup.md").read_text(encoding="utf-8")
     return f"{principal}\n\n---\n\n{sub}"
 
 
 def _tools_spec_para_qwen() -> list[dict[str, Any]]:
-    """Filtra do tools_spec.json apenas as tools que este agente pode chamar."""
+    """Tools permitidas a este agente (least privilege)."""
     import json
     spec_path = Path(__file__).resolve().parents[2] / "tools" / "tools_spec.json"
     todas = json.loads(spec_path.read_text(encoding="utf-8"))
@@ -59,7 +65,8 @@ def executar_checkup(
         backend=backend,  # type: ignore[arg-type]
     )
 
-    # Executa tool calls que o modelo solicitou e devolve resultados
+    # Executa as tools que o LLM pediu (o LLM só descreve a chamada;
+    # rodar a função Python correspondente é responsabilidade nossa).
     tool_outputs: list[dict[str, Any]] = []
     for tc in resposta["tool_calls"]:
         nome = tc["name"]

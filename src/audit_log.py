@@ -1,4 +1,11 @@
-"""Audit log estruturado em JSON — base de auditoria LGPD do BluaDiagnostics."""
+"""Audit log estruturado em JSON — base de auditoria LGPD do BluaDiagnostics.
+
+A LGPD (art. 37/38) exige registro das operações de tratamento, e em
+saúde digital os dados são sensíveis (art. 5º, II). Cada turno gera um
+JSON em `logs/session_<uuid>.json` registrando quem, quando, input,
+intent, RAG chunks, tools, decisão do Safety Layer e resposta final.
+Em produção, o `structlog` permite redirecionar para ELK/Datadog/etc.
+"""
 
 from __future__ import annotations
 
@@ -36,7 +43,15 @@ _logger = structlog.get_logger("bluadiagnostics.audit")
 
 
 class AuditLog:
-    """Acumula e persiste o registro de uma sessão BluaDiagnostics."""
+    """Acumula e persiste o registro de uma sessão BluaDiagnostics.
+
+    Uso (consumido por `no_audit` em graph.py):
+
+        log = AuditLog(beneficiario_id="BENEF-001")
+        log.set_input("dor lombar").set_intent("triagem_sintoma")
+        log.add_tool_call("classificar_risco", {...}, {...})
+        log.set_resposta("Sugiro consulta...").finalizar()
+    """
 
     def __init__(self, beneficiario_id: str | None = None) -> None:
         self.session_id = str(uuid.uuid4())
@@ -102,11 +117,15 @@ class AuditLog:
 
     # --- persistência ---
     def finalizar(self) -> dict[str, Any]:
+        """Grava o JSON em disco e emite no logger estruturado.
+
+        Arquivo é prático em dev; logger structlog facilita coleta por
+        agregador em produção.
+        """
         self.payload["tempo_total_ms"] = int((time.time() - self._inicio) * 1000)
         arquivo = _LOG_DIR / f"session_{self.session_id}.json"
         with arquivo.open("w", encoding="utf-8") as fp:
             json.dump(self.payload, fp, ensure_ascii=False, indent=2)
-        # Replica em log estruturado para coleta por agregador (ELK, Datadog, etc.)
         _logger.info("audit_log_finalizado", **self.payload)
         return self.payload
 

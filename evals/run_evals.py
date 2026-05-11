@@ -1,9 +1,15 @@
 """Suíte de avaliação — LLM-as-a-judge com Qwen sobre os 15 casos da Sprint 1.
 
-Uso:
-    python -m evals.run_evals --backend dashscope
+Para cada caso em `sprint1_eval_set.json` (entrada_usuario,
+resposta_ideal, criterios must/must_not/should), roda o grafo completo,
+manda a tripla (ideal, real, critérios) ao juiz LLM e coleta score 0-100.
 
-Pré-requisito: ``DASHSCOPE_API_KEY`` definida no ambiente.
+Uso: `python -m evals.run_evals --backend dashscope`. Pré-requisito:
+`DASHSCOPE_API_KEY` definida. No Colab, importar e chamar `main()` direto
+(ver Seção 13 do notebook).
+
+Limitação conhecida: o juiz é o mesmo modelo, então pode ter vieses
+sistêmicos — em produção, validar com revisão humana periódica.
 """
 
 from __future__ import annotations
@@ -90,6 +96,9 @@ def _avaliar_caso(caso: dict[str, Any], resposta_real: str, backend: str) -> dic
 
 
 def _formatar_relatorio(resultados: list[dict[str, Any]]) -> str:
+    """Gera o relatório Markdown agregado: totais, quebra por categoria,
+    detalhe dos falhos e tabela com todos os casos.
+    """
     por_categoria: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for r in resultados:
         por_categoria[r["categoria"]].append(r)

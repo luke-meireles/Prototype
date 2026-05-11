@@ -1,4 +1,8 @@
-"""Retrieval semântico sobre o ChromaDB com filtro opcional por metadado."""
+"""Retrieval semântico sobre o ChromaDB com filtro opcional por metadado.
+
+Converte distância cosseno em score (1 - dist) para leitura mais
+intuitiva: 1.0 = idêntico, 0.0 = totalmente diferente.
+"""
 
 from __future__ import annotations
 
@@ -34,10 +38,10 @@ def recuperar_chunks(
     elif isinstance(filtro_tipo, list) and filtro_tipo:
         where = {"tipo": {"$in": filtro_tipo}}
 
-    # ChromaDB retorna distância (cosine). Convertemos em score 1 - dist.
+    # Busca o dobro do top_k para dar margem ao reranker (quando ativado).
     raw = coll.query(
         query_texts=[query],
-        n_results=max(top_k * 2, top_k),  # busca a mais para reranker
+        n_results=max(top_k * 2, top_k),
         where=where,
     )
 

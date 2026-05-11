@@ -1,4 +1,11 @@
-"""Agente Triagem — classificação de risco com RAG + tools."""
+"""Agente Triagem — classificação de risco com RAG + tools.
+
+O agente mais crítico do sistema. Recebe a queixa, faz RAG sobre red
+flags e protocolo de Manchester, chama tools de classificação de risco
+e agendamento, e devolve a recomendação. Thinking ON porque triagem
+clínica é exatamente o tipo de tarefa que se beneficia do passo extra
+de raciocínio — o bloco <think> fica oculto do usuário.
+"""
 
 from __future__ import annotations
 
@@ -54,7 +61,8 @@ def executar_triagem(
         system += json.dumps(dossie_queixas, ensure_ascii=False, indent=2)
         system += "\n```"
 
-    # Compõe query RAG a partir da última mensagem do usuário ou do dossiê
+    # Query RAG: última fala do usuário, com fallback para a queixa
+    # principal do dossiê coletado pelo Check-up.
     query_rag = ""
     for m in reversed(mensagens):
         if m.get("role") == "user":
@@ -63,6 +71,8 @@ def executar_triagem(
     if not query_rag and dossie_queixas:
         query_rag = dossie_queixas.get("queixa_principal", "")
 
+    # Filtro por tipo evita poluir o contexto com bulas/políticas que
+    # importam mais ao agente de prescrição.
     chunks = recuperar_chunks(
         query=query_rag,
         top_k=4,

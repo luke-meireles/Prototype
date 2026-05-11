@@ -1,4 +1,15 @@
-"""Agente Prescrição — apoio ao médico, sempre como rascunho."""
+"""Agente Prescrição — apoio ao médico, sempre como rascunho.
+
+ATENÇÃO REGULATÓRIA: pela Resolução CFM 2.314/22, prescrição médica no
+Brasil exige assinatura por profissional habilitado (ICP-Brasil). O
+BluaDiagnostics nunca emite prescrição final — toda saída começa com a
+tag `[RASCUNHO_AGUARDANDO_REVISAO_MEDICA]`.
+
+Atende o caminho secundário (persona médica). Entrada esperada: o
+médico descreve hipótese diagnóstica e medicação considerada. Thinking
+ON porque verificar interações e dose por idade/peso/comorbidade
+exige raciocínio.
+"""
 
 from __future__ import annotations
 
@@ -13,7 +24,7 @@ from src.tools import TOOL_REGISTRY
 _PROMPTS_DIR = Path(__file__).resolve().parents[2] / "prompts"
 _TOOLS_PATH = Path(__file__).resolve().parents[2] / "tools" / "tools_spec.json"
 
-# Tag obrigatória que o Safety Layer valida na saída deste agente
+# Tag obrigatória — em maiúsculas para facilitar string match em auditoria.
 _TAG_RASCUNHO = "[RASCUNHO_AGUARDANDO_REVISAO_MEDICA]"
 
 
@@ -87,7 +98,8 @@ def executar_prescricao(
         saida = TOOL_REGISTRY[nome](**args)
         tool_outputs.append({"nome": nome, "input": args, "output": saida})
 
-    # Garante a tag obrigatória, mesmo se o modelo a omitiu
+    # Defense in depth: a tag é pedida no prompt, mas reforçada aqui no
+    # código caso o modelo a omita.
     content = resposta["content"]
     if _TAG_RASCUNHO not in content:
         content = f"{_TAG_RASCUNHO}\n\n{content}"

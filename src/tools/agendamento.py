@@ -1,4 +1,10 @@
-"""Tool: agendamento de teleconsulta Care Plus (mockado)."""
+"""Tool: agendamento de teleconsulta Care Plus (mockado).
+
+Entrada: especialidade + data preferida + urgência (baixa/media/alta).
+Saída: ID da consulta, horário, link, médico. A urgência define a janela
+de SLA (1h / 24h / 7 dias) — em produção esses limites virão da política
+da operadora.
+"""
 
 from __future__ import annotations
 
@@ -38,9 +44,8 @@ def agendar_teleconsulta(
 ) -> dict[str, Any]:
     """Cria um agendamento mockado de teleconsulta.
 
-    A escolha do médico é determinística (primeiro da lista) para evitar
-    flutuação nos resultados das demos. O horário simulado respeita a janela
-    da urgência informada.
+    A escolha do médico é determinística (primeiro da lista) para manter as
+    demos reproduzíveis.
     """
     AgendamentoInput(
         especialidade=especialidade,

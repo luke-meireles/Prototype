@@ -1,7 +1,7 @@
-# Decisão de modelo — Qwen 3.5 vs Llama 3.3 70B
+# Decisão de modelo — Qwen vs Llama 3.3 70B
 
 > Documento de Architectural Decision Record (ADR) para a Sprint 1 do
-> BluaDiagnostics. Justifica a escolha do Qwen 3.5 sobre o Llama 3.3 70B,
+> BluaDiagnostics. Justifica a escolha do Qwen sobre o Llama 3.3 70B,
 > únicos candidatos avaliados nesta sprint conforme escopo definido.
 
 ## Contexto
@@ -10,7 +10,7 @@ A operadora Care Plus precisa de um LLM que sustente o BluaDiagnostics em
 produção. O sistema é clínico, opera em PT-BR, lida com dados sensíveis
 sob LGPD, exige function calling robusto e precisa rodar tanto em nuvem
 (DashScope) quanto em ambiente on-premise (Ollama). Avaliamos dois modelos
-abertos competitivos: **Qwen 3.5** (família Alibaba) e **Llama 3.3 70B**
+abertos competitivos: **Qwen** (família Alibaba) e **Llama 3.3 70B**
 (Meta).
 
 ## Critérios de avaliação
@@ -25,7 +25,7 @@ abertos competitivos: **Qwen 3.5** (família Alibaba) e **Llama 3.3 70B**
 
 ## Tabela comparativa
 
-| Critério | Qwen 3.5 (escolhido) | Llama 3.3 70B |
+| Critério | Qwen (escolhido) | Llama 3.3 70B |
 |---|---|---|
 | Lançamento | 2025–2026, atualizações frequentes | dez/2024 |
 | PT-BR nativo | treinado em 201 idiomas com qualidade clínica | bom em PT-BR mas sem foco médico |
@@ -39,11 +39,11 @@ abertos competitivos: **Qwen 3.5** (família Alibaba) e **Llama 3.3 70B**
 | On-prem | Ollama, vLLM, llama.cpp — quantizações <16GB | Ollama, vLLM — exige >40GB de VRAM em FP16 |
 | Frameworks de agente | `qwen-agent` oficial + LangGraph | LangGraph, LangChain |
 
-## Cinco motivos centrais para Qwen 3.5
+## Cinco motivos centrais para Qwen
 
 ### 1. Instruction following (IFBench 76,5)
 
-O Qwen 3.5 lidera em benchmarks de seguimento de instrução. Em saúde
+O Qwen lidera em benchmarks de seguimento de instrução. Em saúde
 digital, a regra inegociável precisa ser respeitada **incondicionalmente**.
 Diferenças de 5 pontos no IFBench se traduzem em centenas de violações
 evitadas por mês na escala da Care Plus (600k+ beneficiários).
@@ -73,7 +73,7 @@ Blua arriscado juridicamente.
 
 ### 5. Eficiência via MoE e variantes leves
 
-A variante Qwen 3.5 35B-A3B (Mixture of Experts) ativa apenas ~3B
+A variante Qwen 35B-A3B (Mixture of Experts) ativa apenas ~3B
 parâmetros em inferência, oferecendo qualidade próxima de modelos densos
 muito maiores com fração do custo. Para servidor on-prem da Care Plus,
 isso significa dimensionar GPU para 24GB em vez de 80GB, viabilizando
@@ -91,12 +91,12 @@ hardware existente.
 
 ## Decisão
 
-Adotamos **Qwen 3.5** como modelo principal do BluaDiagnostics, com
+Adotamos **Qwen** como modelo principal do BluaDiagnostics, com
 duas configurações homologadas:
 
-- **Configuração A (cloud)**: `qwen3.5-plus` via DashScope International (família Qwen 3.5 fixada — não usamos a 3.6 ainda em revisão clínica),
+- **Configuração A (cloud)**: `qwen-plus` via DashScope International (família Qwen fixada),
   para o ambiente de homologação e a primeira fase de produção.
-- **Configuração B (on-prem)**: `qwen3.5:9b` via Ollama, para clientes
+- **Configuração B (on-prem)**: `qwen:9b` via Ollama, para clientes
   corporativos com requisitos de isolamento total ou para o ambiente de
   contingência.
 

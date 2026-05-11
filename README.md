@@ -4,14 +4,18 @@
 > Português Brasileiro nativo, integrado ao app Blua, que apoia triagem
 > conversacional de sintomas e prescrição remota assistida (sempre com
 > aprovação médica humana). Sprint 1 de PoC acadêmica FIAP.
+>
+> **Projeto Colab-first**: o ponto de entrada canônico é o notebook
+> [`notebooks/sprint1_poc.ipynb`](notebooks/sprint1_poc.ipynb), executado no
+> Google Colab.
 
 ## Integrantes
 
-- [Nome — RM XXXXX]
-- [Nome — RM XXXXX]
-- [Nome — RM XXXXX]
-- [Nome — RM XXXXX]
-- [Nome — RM XXXXX]
+- Lucas Gabriel Alvarenga e Meireles — RM 567305
+- Gabriel Augusto da Silva — RM 567057
+- Leonardo Kenji Kubo Barboza — RM 567518
+- Lucas Koiti Uyeno de Souza — RM 568128
+- Lucas Morio Ikeda — RM 567616
 
 ## Persona escolhida e justificativa
 
@@ -33,27 +37,26 @@ substituir o médico**.
 
 | Camada | Tecnologia |
 |---|---|
-| LLM principal | Qwen 3.5 (`qwen3.5-plus` via DashScope ou `qwen3.5:9b` via Ollama) |
+| Ambiente de execução | **Google Colab** (Python 3.11, CPU runtime gratuito) |
+| LLM principal | Qwen (`qwen-plus` via DashScope International) |
 | SDK | `openai` Python (Qwen é OpenAI-compatible) + `qwen-agent` (uma demo) |
 | Orquestração multi-agente | LangGraph (`StateGraph` + `MemorySaver`) |
-| RAG utilitários | LangChain (apenas para `RecursiveCharacterTextSplitter`) |
-| Vector DB | ChromaDB (persistência local) |
+| RAG utilitários | `langchain-text-splitters` (apenas o splitter) |
+| Vector DB | ChromaDB (persistência local em `/content/bluadiagnostics/chroma_db/`) |
 | Embeddings | `intfloat/multilingual-e5-large` via `sentence-transformers` |
 | Reranker | Interface pluggável (default desligado na PoC) |
 | Memória curto prazo | LangGraph `MemorySaver` |
 | Memória longo prazo | JSON estruturado por `beneficiario_id` |
 | Validação | Pydantic v2 |
-| Logging estruturado | `structlog` (output JSON) |
+| Logging estruturado | `structlog` (output JSON em `logs/`) |
 | Avaliação | LLM-as-a-judge com Qwen sobre 15 casos |
 | Diagramação | Mermaid + PNG exportado |
-| Segredos | `python-dotenv` local + Google Colab Secrets |
+| Segredos | **Google Colab Secrets** (preferencial) ou `python-dotenv` em local |
 
 ## Arquitetura
 
 A arquitetura completa está em [`docs/arquitetura.mermaid`](docs/arquitetura.mermaid)
-e renderizada em [`docs/arquitetura.png`](docs/arquitetura.png) (gere via
-[mermaid.live](https://mermaid.live) — passo a passo no arquivo PNG
-placeholder).
+e renderizada em [`docs/arquitetura.png`](docs/arquitetura.png).
 
 ```mermaid
 flowchart TD
@@ -76,11 +79,11 @@ Cinco nós principais: **Roteador → (Check-up | Triagem | Prescrição |
 Dúvida | Fora-de-escopo) → Safety Layer → Audit Log**, com `thread_id`
 preservando memória multi-turno.
 
-## Comparação de modelos: Qwen 3.5 vs Llama 3.3
+## Comparação de modelos: Qwen vs Llama 3.3
 
 Detalhes em [`docs/decisao_modelo.md`](docs/decisao_modelo.md). Resumo:
 
-| Critério | Qwen 3.5 (escolhido) | Llama 3.3 70B |
+| Critério | Qwen (escolhido) | Llama 3.3 70B |
 |---|---|---|
 | Lançamento | 2025–2026 | dez/2024 |
 | PT-BR clínico | nativo, 201 idiomas | bom, sem foco médico |
@@ -90,10 +93,10 @@ Detalhes em [`docs/decisao_modelo.md`](docs/decisao_modelo.md). Resumo:
 | Hybrid thinking mode | **sim, toggle por chamada** | não |
 | Contexto | até 1M | 128K |
 | Arquitetura | dense + MoE 35B-A3B | dense 70B |
-| On-prem mínimo | 12 GB VRAM (qwen3.5:9b) | 40+ GB VRAM |
+| Disponibilidade Colab | DashScope (cloud) — funciona em CPU runtime | exige GPU robusta on-prem |
 | Frameworks de agente | `qwen-agent` oficial + LangGraph | LangGraph |
 
-**Cinco motivos para Qwen 3.5**:
+**Cinco motivos para Qwen**:
 
 1. **Instruction following (IFBench 76,5)** — crítico para guardrails
    clínicos respeitarem a regra inegociável.
@@ -101,8 +104,8 @@ Detalhes em [`docs/decisao_modelo.md`](docs/decisao_modelo.md). Resumo:
    em bulas e protocolos.
 3. **Hybrid thinking mode** — toggle por agente sem trocar de modelo.
 4. **Licença Apache 2.0** — sem restrições comerciais.
-5. **Eficiência via MoE** — variante 35B-A3B ativa só 3B params,
-   viabilizando GPU de 24GB.
+5. **Compatível com Colab** — toda inferência roda em cloud (DashScope), o
+   notebook não precisa de GPU paga.
 
 ## Modos de deployment
 
@@ -110,10 +113,12 @@ Detalhes em [`docs/deployment_modes.md`](docs/deployment_modes.md).
 
 | Modo | Quando usar | Backend |
 |---|---|---|
-| **A — Cloud DashScope** (padrão) | homologação, primeira fase de produção | `qwen3.5-plus` em `dashscope-intl.aliyuncs.com` |
-| **B — On-prem Ollama** | clientes com isolamento total, contingência | `qwen3.5:9b` em `localhost:11434` |
+| **A — Cloud DashScope** (padrão Colab) | PoC, homologação, primeira fase de produção | `qwen-plus` em `dashscope-intl.aliyuncs.com` |
+| **B — On-prem Ollama** (fora do Colab) | clientes com isolamento total, contingência | `qwen:9b` em `localhost:11434` |
 
-Troca via parâmetro: `chat(..., backend="dashscope" or "ollama")`.
+Troca via parâmetro: `chat(..., backend="dashscope" or "ollama")`. **No Colab,
+use sempre `dashscope`** — o Ollama exige um servidor local, indisponível
+no runtime do Colab por padrão.
 
 ## Mapeamento de riscos clínicos e LGPD
 
@@ -127,14 +132,56 @@ Troca via parâmetro: `chat(..., backend="dashscope" or "ollama")`.
 | Dependência emocional | Usuário substitui suporte humano | Mensagens recorrentes oferecendo "Atendente humano"; encaminhamento ativo em ideação suicida (CVV 188) |
 | Overtrust do usuário | Confiança excessiva no bot | Disclaimer obrigatório em toda resposta; linguagem probabilística; recusa de fechamento de diagnóstico |
 
-## Como rodar a PoC
+## Como rodar a PoC no Google Colab
 
 ### Pré-requisitos
-- Python 3.11+ (testado também em 3.14)
-- Chave DashScope International (<https://bailian.console.alibabacloud.com>)
-  **ou** Ollama local com um modelo Qwen.
 
-### Setup
+- Conta Google (para o Colab).
+- Chave **DashScope International** (<https://bailian.console.alibabacloud.com>)
+  com o **Model Studio** ativado (1 milhão de tokens grátis por 90 dias).
+- Repositório do projeto disponível no GitHub (próprio fork) **ou** o `.zip`
+  da pasta `bluadiagnostics/` para upload manual.
+
+### Passo-a-passo
+
+1. **Suba o projeto ao Colab** — duas opções:
+   - **GitHub** (recomendado): no notebook, edite a constante `REPO_URL` na
+     Seção 1.1 e a célula faz `git clone` automaticamente em
+     `/content/bluadiagnostics`.
+   - **Upload manual**: comprima a pasta `bluadiagnostics/` em `.zip`, suba
+     pela aba **Arquivos** do Colab e descompacte com
+     `!unzip bluadiagnostics.zip -d /content/`.
+2. **Configure o Colab Secret**:
+   - Ícone de **chave** (🔑) na barra lateral esquerda do Colab.
+   - **+ Add new secret** → Name: `DASHSCOPE_API_KEY` → Value: sua chave
+     (do **Bailian Console**).
+   - Habilite o toggle **Notebook access**.
+3. **Abra `notebooks/sprint1_poc.ipynb`** no Colab e execute as células em
+   ordem (`Runtime → Run all` funciona):
+   - **Seção 1**: clona o repo (se necessário), instala deps (~3 min) e
+     carrega o secret. Não exige GPU — Qwen roda em cloud.
+   - **Seção 2**: baixa `intfloat/multilingual-e5-large` (~1 GB) e indexa
+     a KB (~30 s).
+   - **Seções 3–6**: validam tools, wrapper Qwen e o grafo LangGraph.
+   - **Seções 7–12**: 6 demos clínicas (happy path, multi-turno, red flag,
+     tool, safety, qwen-agent).
+   - **Seção 13**: roda o eval set (15 casos) com Qwen como juiz e renderiza
+     o relatório.
+
+### Solução de problemas comuns no Colab
+
+| Erro | Causa | Como resolver |
+|---|---|---|
+| `DASHSCOPE_API_KEY não encontrada` | Secret não configurado ou sem Notebook access | Reabra o painel 🔑 e habilite **Notebook access** no secret |
+| `403 AccessDenied.Unpurchased` | Conta DashScope sem free trial ativada | Ative o **Model Studio** em <https://bailian.console.alibabacloud.com/> |
+| `401 Unauthorized` | Chave inválida ou expirada | Gere nova chave no Bailian Console e atualize o Secret |
+| `ModuleNotFoundError` após restart | Runtime foi desconectado | Re-execute a Seção 1 (instalação de deps) |
+| `OSError: HTTP error... e5-large` | Cache de embeddings corrompido | `!rm -rf ~/.cache/huggingface` e re-execute a Seção 2 |
+| `429 quota` / `rate limit` | Free trial atingiu RPM | Aguarde alguns segundos ou divida a execução |
+
+### Execução local (alternativa fora do Colab)
+
+Se preferir rodar fora do Colab — Linux/macOS/Windows com Python 3.11+:
 
 ```bash
 git clone <repo> bluadiagnostics
@@ -144,88 +191,13 @@ python -m venv .venv
 # source .venv/bin/activate     # Linux/macOS
 pip install -r requirements.txt
 cp .env.example .env             # edite com sua DASHSCOPE_API_KEY
-```
-
-### Primeira execução
-
-```bash
-# 1. Indexa knowledge base no ChromaDB (download do modelo de embeddings ~1.1GB no 1º run)
-python -c "from src.rag.indexer import indexar_knowledge_base; print(indexar_knowledge_base())"
-
-# 2. Smoke test — confere que a API key e o modelo estão acessíveis
-python main.py --smoke
-
-# 3. Modo interativo (chat)
-python main.py
-python main.py --beneficiario BENEF-001    # injeta perfil de paciente
-
-# 4. Pergunta única e saída
+python main.py --smoke           # ping no LLM
 python main.py --once "Sinto dor lombar há dois dias."
-
-# 5. Eval set (15 casos)
-python -m evals.run_evals --backend dashscope
+python -m evals.run_evals        # eval set
 ```
 
-### Backend Ollama (on-prem, sem cloud)
-
-```bash
-# 1. Instale o Ollama: https://ollama.com
-# 2. Baixe um modelo Qwen
-ollama pull qwen2.5:7b               # ou qwen3:8b, qwen3:14b
-# 3. Ajuste no .env
-#    QWEN_OLLAMA_MODEL=qwen2.5:7b
-# 4. Rode em modo Ollama
-python main.py --backend ollama --smoke
-python main.py --backend ollama
-```
-
-### Solução de problemas comuns
-
-| Erro | Causa | Como resolver |
-|---|---|---|
-| `403 AccessDenied.Unpurchased` | Conta DashScope International sem free trial ativado | Acesse o **Bailian Console** (link acima) → ative o **Model Studio** → ganha 1M tokens grátis por 90 dias |
-| `401 Unauthorized` | Chave inválida | Gere nova chave no console e atualize `DASHSCOPE_API_KEY` no `.env` |
-| `Connection error` no backend ollama | Ollama não rodando | `ollama serve` em outro terminal |
-| `Model not found` no ollama | Modelo não baixado | `ollama pull qwen2.5:7b` e ajustar `QWEN_OLLAMA_MODEL` no `.env` |
-| `ModuleNotFoundError: chromadb` | Deps incompletos | `pip install -r requirements.txt` |
-
-### Notebook PoC — rodar no Google Colab
-
-> **Modelo fixado**: `qwen3.5-plus` (família **Qwen 3.5**, sem 3.6). O
-> notebook força essa escolha via `os.environ['QWEN_DASHSCOPE_MODEL']`.
-
-Passo-a-passo do zero, sem `git` local:
-
-1. **Suba o projeto para o Colab**. Duas opções:
-   - **GitHub** (recomendado): faça push do projeto e use a primeira
-     célula do notebook (`!git clone <sua-url>`) — basta editar a URL.
-   - **Upload manual**: comprima a pasta `bluadiagnostics/` em `.zip`,
-     suba via aba **Arquivos** do Colab e descompacte com
-     `!unzip bluadiagnostics.zip -d /content/`.
-2. **Configure o Colab Secret**:
-   - Ícone de **chave** (🔑) na barra lateral esquerda do Colab
-   - **+ Add new secret** → Name: `DASHSCOPE_API_KEY` → Value: sua
-     chave (do **Bailian Console**)
-   - Habilite o toggle **Notebook access**
-3. **Abra `notebooks/sprint1_poc.ipynb`** no Colab e execute as células
-   em ordem (`Runtime → Run all` funciona):
-   - **Seção 1**: clona o repo (se necessário), instala deps (~3 min) e
-     carrega o secret. Forçamos GPU desligada — Qwen roda em cloud, não
-     na máquina do Colab.
-   - **Seção 2**: baixa `intfloat/multilingual-e5-large` (~1.1 GB) e
-     indexa a KB (~30 s).
-   - **Seções 3–6**: validam tools, wrapper Qwen e o grafo LangGraph.
-   - **Seções 7–12**: 6 demos clínicas (happy path, multi-turno,
-     red flag, tool, safety, qwen-agent).
-   - **Seção 13**: roda o eval set (15 casos) com Qwen como juiz.
-
-**Pré-requisito**: a conta DashScope precisa ter o **Model Studio**
-ativado (1M tokens grátis por 90 dias). Se a Seção 5 retornar
-`403 AccessDenied.Unpurchased`, ative em
-<https://bailian.console.alibabacloud.com/> antes de continuar.
-
-**Sem GPU?** Sem problema — toda a inferência LLM é remota (DashScope).
-A GPU só seria útil para o backend Ollama, não usado em Colab.
+A CLI `main.py` reaproveita o mesmo módulo `colab_setup.py`, então funciona
+igual em ambos ambientes.
 
 ## Estrutura de pastas
 
@@ -233,17 +205,19 @@ A GPU só seria útil para o backend Ollama, não usado em Colab.
 bluadiagnostics/
 ├── README.md
 ├── .gitignore
-├── requirements.txt
-├── .env.example
+├── requirements.txt          # deps Colab-friendly
+├── .env.example              # referência para uso local (Colab usa Secrets)
+├── colab_setup.py            # bootstrap idempotente para o notebook
+├── main.py                   # CLI fina (útil em local e em !python)
 ├── docs/                     # arquitetura, decisão de modelo, deployment
 ├── prompts/                  # system + 4 sub-prompts (.md)
 ├── tools/                    # tools_spec.json (5 tools)
 ├── knowledge_base/           # 7 documentos .md (PT-BR, 800–1500 palavras cada)
 ├── evals/                    # eval set + runner LLM-as-a-judge
-├── notebooks/                # PoC interativa (13 seções)
+├── notebooks/                # PoC interativa Colab (13 seções)
 ├── data/mocks/               # 4 mocks JSON
 ├── logs/                     # audit log estruturado (gitignored)
-├── ollama/                   # Modelfile + README on-prem
+├── ollama/                   # Modelfile + README on-prem (uso fora do Colab)
 └── src/
     ├── llm/                  # qwen_client + ollama_client
     ├── agents/               # router, checkup, triagem, prescricao, safety

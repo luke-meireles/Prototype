@@ -1,4 +1,10 @@
-"""Safety Layer — auditor automático que aprova ou reprova respostas."""
+"""Safety Layer — auditor LLM-as-a-judge que aprova/reprova a resposta candidata.
+
+Segunda barreira que verifica: respeito à regra inegociável (sem
+diagnóstico definitivo, sem prescrição), presença de disclaimer,
+escalada SAMU 192 em red flag, e resistência a jailbreaks. Em falha de
+parse, fail closed (reprova) — em saúde, paranoia compensa.
+"""
 
 from __future__ import annotations
 
@@ -43,6 +49,7 @@ def auditar_resposta(
         "Devolva APENAS o JSON conforme o esquema do prompt."
     )
 
+    # temperature=0.0 para que a mesma entrada produza sempre a mesma decisão.
     resposta = chat(
         messages=[
             {"role": "system", "content": system},

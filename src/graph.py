@@ -1,4 +1,19 @@
-"""Orquestração multi-agente do BluaDiagnostics via LangGraph."""
+"""Orquestração multi-agente do BluaDiagnostics via LangGraph.
+
+Fluxo:
+
+    USUÁRIO → Roteador → (Checkup | Triagem | Prescricao | Duvida | ForaEscopo)
+                                       ↓
+                                    Safety
+                                       ↓
+                                    Audit
+                                       ↓
+                                   RESPOSTA
+
+`EstadoBlua` é o estado tipado compartilhado entre nós (TypedDict
+para casar com a API de dict do LangGraph). `MemorySaver` mantém
+memória multi-turno por `thread_id`.
+"""
 
 from __future__ import annotations
 
@@ -16,11 +31,7 @@ from src.audit_log import AuditLog
 
 
 class EstadoBlua(TypedDict, total=False):
-    """Estado compartilhado entre os nós do grafo.
-
-    Cada nó lê o que precisa e escreve sua contribuição. Tudo é serializável
-    para o ``MemorySaver``, que permite continuação de sessão multi-turno.
-    """
+    """Estado compartilhado entre os nós do grafo, serializável para MemorySaver."""
 
     mensagens: list[dict[str, Any]]
     beneficiario_id: str | None
@@ -42,7 +53,7 @@ class EstadoBlua(TypedDict, total=False):
 
 
 def no_roteador(state: EstadoBlua) -> dict[str, Any]:
-    """Classifica a intent da última mensagem do usuário."""
+    """Primeiro nó: classifica a intent da última mensagem e despacha."""
     mensagens = state["mensagens"]
     ultimo_usuario = next(
         (m["content"] for m in reversed(mensagens) if m.get("role") == "user"),
@@ -75,6 +86,7 @@ def no_checkup(state: EstadoBlua) -> dict[str, Any]:
 
 
 def no_triagem(state: EstadoBlua) -> dict[str, Any]:
+    """Nó da triagem — RAG + classificação de risco + recomendação."""
     backend = state.get("backend", "dashscope")
     saida = executar_triagem(
         mensagens=state["mensagens"],
@@ -83,6 +95,8 @@ def no_triagem(state: EstadoBlua) -> dict[str, Any]:
         backend=backend,
     )
 
+    # Promove o resultado da classificar_risco_clinico ao topo do estado
+    # para que outros nós (safety, audit) acessem direto.
     classificacao = None
     for tc in saida["tool_calls"]:
         if tc["nome"] == "classificar_risco_clinico":
@@ -151,7 +165,12 @@ def no_fora_escopo(state: EstadoBlua) -> dict[str, Any]:
 
 
 def no_safety(state: EstadoBlua) -> dict[str, Any]:
-    """Auditoria final antes da resposta sair."""
+    """Auditoria LLM-as-a-judge antes da resposta sair.
+
+    Em Sprint 1, reprovação só marca o estado e segue para audit. Em
+    sprints futuras, vai voltar ao agente original com instruções de
+    correção.
+    """
     backend = state.get("backend", "dashscope")
     mensagens = state["mensagens"]
     ultimo_usuario = next(
@@ -173,8 +192,6 @@ def no_safety(state: EstadoBlua) -> dict[str, Any]:
     aprovado = bool(auditoria["aprovado"])
     motivos = auditoria.get("motivos_reprovacao", [])
 
-    # Se reprovado, anexamos uma nota — o regenerador é a próxima passagem
-    # do grafo na PoC. Aqui simplificamos: marcamos a reprovação no estado.
     return {
         "safety_aprovado": aprovado,
         "safety_motivos": motivos,
@@ -213,6 +230,9 @@ def no_audit(state: EstadoBlua) -> dict[str, Any]:
 
 
 def _rotear_intent(state: EstadoBlua) -> str:
+    """Roteamento condicional. Default `duvida_geral` em caso de incerteza —
+    caminho mais conservador que tentar adivinhar uma triagem clínica.
+    """
     intent = state.get("intent_classificada")
     if intent == "checkup":
         return "checkup"
@@ -229,7 +249,14 @@ def _rotear_intent(state: EstadoBlua) -> str:
 
 
 def construir_grafo() -> Any:
-    """Compõe o ``StateGraph`` com os 5 nós principais + audit + memória."""
+    """Monta o StateGraph com os 5 nós de resposta + safety + audit.
+
+        roteador  ─┬─→ checkup ────┐
+                   ├─→ triagem ────┤
+                   ├─→ prescricao ─┼─→ safety → audit → END
+                   ├─→ duvida ─────┤
+                   └─→ fora_escopo ┘
+    """
     grafo = StateGraph(EstadoBlua)
 
     grafo.add_node("roteador", no_roteador)
@@ -242,6 +269,7 @@ def construir_grafo() -> Any:
     grafo.add_node("audit", no_audit)
 
     grafo.set_entry_point("roteador")
+
     grafo.add_conditional_edges(
         "roteador",
         _rotear_intent,
@@ -260,7 +288,6 @@ def construir_grafo() -> Any:
     grafo.add_edge("safety", "audit")
     grafo.add_edge("audit", END)
 
-    # Checkpoint em memória — habilita continuação multi-turno por thread_id
     return grafo.compile(checkpointer=MemorySaver())
 
 
@@ -273,7 +300,11 @@ def executar_turno(
     historico: list[dict[str, Any]] | None = None,
     medicacao_proposta: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Helper que envia um turno do usuário ao grafo e retorna o estado final."""
+    """Envia um turno do usuário ao grafo e retorna o estado final.
+
+    Reutilize o mesmo `thread_id` em chamadas sucessivas para manter
+    memória multi-turno; passe um novo id para começar do zero.
+    """
     historico = historico or []
     historico.append({"role": "user", "content": mensagem_usuario})
 

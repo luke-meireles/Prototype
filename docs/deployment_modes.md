@@ -3,21 +3,31 @@
 > O sistema suporta dois modos de deployment desde a Sprint 1, com troca
 > de backend feita por flag (`backend="dashscope"` vs `backend="ollama"`).
 > Nenhuma alteração de código consumidor é necessária.
+>
+> **No Google Colab**, apenas a Configuração A (DashScope) é viável — o
+> runtime do Colab não roda servidor Ollama por padrão. A Configuração B
+> existe para clientes corporativos com hardware próprio (descrita aqui
+> para fins de roadmap).
 
-## Configuração A — Cloud DashScope (padrão)
+## Configuração A — Cloud DashScope (padrão Colab)
 
-**Quando usar**: ambiente de homologação, primeira fase de produção,
-ambientes em que o trade-off latência/custo é favorável e os dados em
-trânsito estão dentro dos termos contratuais com a Alibaba Cloud.
+**Quando usar**: PoC no Colab, ambiente de homologação, primeira fase de
+produção, ambientes em que o trade-off latência/custo é favorável e os
+dados em trânsito estão dentro dos termos contratuais com a Alibaba Cloud.
 
 **Stack**:
-- Modelo: `qwen3.5-plus` (recomendado, fixado na família Qwen 3.5) ou `qwen3.5-max` para casos críticos.
+- Modelo: `qwen-plus` (recomendado, fixado na família Qwen) ou `qwen-max` para casos críticos.
 - Endpoint: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`.
 - SDK: `openai` Python (DashScope é OpenAI-compatible).
 
-**Setup mínimo**:
+**Setup mínimo no Colab**:
+1. Abra `notebooks/sprint1_poc.ipynb`.
+2. Adicione `DASHSCOPE_API_KEY` em Colab Secrets (🔑) com Notebook access.
+3. Rode `Runtime → Run all`.
+
+**Setup mínimo em ambiente local (alternativo)**:
 ```bash
-export DASHSCOPE_API_KEY=...   # obtenha em dashscope.console.aliyun.com
+export DASHSCOPE_API_KEY=...   # obtenha em bailian.console.alibabacloud.com
 pip install -r requirements.txt
 python -m evals.run_evals --backend dashscope
 ```
@@ -25,7 +35,7 @@ python -m evals.run_evals --backend dashscope
 **Vantagens**:
 - Zero infraestrutura para gerir.
 - Escalonamento automático.
-- Acesso a modelos de ponta (Qwen 3.5 plus/max) sem custo de hardware.
+- Acesso a modelos de ponta (Qwen plus/max) sem custo de hardware.
 - Hybrid thinking mode totalmente suportado.
 
 **Desvantagens**:
@@ -34,15 +44,16 @@ python -m evals.run_evals --backend dashscope
 - Latência variável dependendo da região.
 - Custo por token, embora competitivo.
 
-## Configuração B — On-prem com Ollama
+## Configuração B — On-prem com Ollama (fora do Colab)
 
 **Quando usar**: clientes corporativos da Care Plus que exigem
 isolamento total dos dados, ambiente de contingência (caso DashScope
 fique indisponível), e ambientes onde o custo de inferência variável é
-proibitivo.
+proibitivo. **Não funciona no Colab gratuito** porque exige um servidor
+Ollama persistente na máquina hospedeira.
 
 **Stack**:
-- Modelo: `qwen3.5:9b` quantizado pelo Ollama (Q4_K_M) — ~5,5 GB.
+- Modelo: `qwen:9b` quantizado pelo Ollama (Q4_K_M) — ~5,5 GB.
 - Endpoint: `http://localhost:11434/v1` (OpenAI-compatible).
 - Hardware mínimo: GPU com 12 GB de VRAM (ex.: RTX 3060 12GB,
   L4, A10).
@@ -51,7 +62,7 @@ proibitivo.
 
 **Setup mínimo**:
 ```bash
-ollama pull qwen3.5:9b
+ollama pull qwen:9b
 ollama create blua-qwen -f ollama/Modelfile
 export OLLAMA_BASE_URL=http://localhost:11434/v1
 export QWEN_OLLAMA_MODEL=blua-qwen
@@ -94,7 +105,7 @@ ou seja: defina uma vez ao iniciar o turno e todos os nós obedecem.
 
 | Sprint | Marco |
 |---|---|
-| Sprint 1 (atual) | PoC com DashScope, simulação on-prem com Ollama local |
+| Sprint 1 (atual) | PoC entregue como notebook Colab usando DashScope; simulação on-prem com Ollama documentada |
 | Sprint 2 | Homologação na Care Plus em ambiente isolado, ainda DashScope |
 | Sprint 3 | Piloto restrito com 200 beneficiários — Configuração A |
 | Sprint 4 | Decisão sobre Configuração B definitiva: GPU dedicada ou cloud privada |

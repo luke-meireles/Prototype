@@ -1,4 +1,10 @@
-"""Indexação da knowledge base no ChromaDB com embeddings multilíngues."""
+"""Indexação da knowledge base no ChromaDB com embeddings multilíngues.
+
+Quebra os 7 documentos .md em chunks de ~1500 chars, gera embeddings
+com `intfloat/multilingual-e5-large` (~1 GB no primeiro download, depois
+cache) e persiste em ChromaDB. O modelo de embeddings foi escolhido por
+performar bem em PT-BR sem fine-tuning e rodar em CPU/GPU.
+"""
 
 from __future__ import annotations
 
@@ -31,16 +37,13 @@ _EMBEDDING_MODEL = "intfloat/multilingual-e5-large"
 
 
 def _embedding_function() -> Any:
-    """Constrói a função de embeddings multilíngue.
-
-    Usamos sentence-transformers via integração nativa do Chroma. O modelo
-    multilingual-e5-large performa bem em PT-BR sem fine-tuning."""
     return embedding_functions.SentenceTransformerEmbeddingFunction(
         model_name=_EMBEDDING_MODEL
     )
 
 
 def _client() -> chromadb.ClientAPI:
+    """Cliente Chroma persistente. Telemetria desligada para LGPD."""
     _CHROMA_DIR.mkdir(parents=True, exist_ok=True)
     return chromadb.PersistentClient(
         path=str(_CHROMA_DIR),
@@ -58,7 +61,11 @@ def get_collection() -> chromadb.api.models.Collection.Collection:
 
 
 def _splitter() -> RecursiveCharacterTextSplitter:
-    """Splitter com 300–400 tokens equivalentes (≈1500 chars) e overlap 50."""
+    """Chunks de ~1500 chars com 200 de overlap, cortando em fronteiras Markdown.
+
+    A lista de separadores prioriza cabeçalhos H2/H3 e quebras de
+    parágrafo, evitando partir frases no meio.
+    """
     return RecursiveCharacterTextSplitter(
         chunk_size=1500,
         chunk_overlap=200,
@@ -89,6 +96,8 @@ def indexar_knowledge_base(forcar_reindex: bool = False) -> dict[str, Any]:
         metadata={"hnsw:space": "cosine"},
     )
 
+    # Idempotência: pula reindex se a collection já está populada. Use
+    # forcar_reindex=True quando o conteúdo da KB mudou.
     if coll.count() > 0 and not forcar_reindex:
         return {
             "status": "ja_indexado",

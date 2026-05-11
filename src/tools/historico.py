@@ -1,4 +1,9 @@
-"""Tool: consulta histórico clínico do beneficiário Care Plus (mockado)."""
+"""Tool: consulta histórico clínico do beneficiário Care Plus (mockado).
+
+Lê de ``data/mocks/perfis_clinicos.json``. Em produção viraria chamada
+autenticada ao prontuário eletrônico (FHIR/HL7) com escopos OAuth e
+consentimento LGPD.
+"""
 
 from __future__ import annotations
 
@@ -24,12 +29,8 @@ def _carregar_mock() -> dict[str, Any]:
 
 
 def consultar_historico_paciente(beneficiario_id: str) -> dict[str, Any]:
-    """Retorna o dossiê clínico mockado do beneficiário.
-
-    Em produção, este método seria substituído por uma chamada autenticada
-    ao prontuário eletrônico Care Plus, com auditoria LGPD apropriada.
-    """
-    HistoricoInput(beneficiario_id=beneficiario_id)  # valida o input
+    """Retorna o dossiê clínico mockado do beneficiário."""
+    HistoricoInput(beneficiario_id=beneficiario_id)
 
     base = _carregar_mock()
     perfil = base.get(beneficiario_id)

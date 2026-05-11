@@ -1,14 +1,14 @@
-# Modelfile BluaDiagnostics — variante on-prem com Qwen 3.5 9B
+# Modelfile BluaDiagnostics — variante on-prem com Qwen 9B
 #
 # Cria o modelo "blua-qwen" carregando o system prompt principal e parâmetros
 # afinados para uso clínico conservador.
 #
 # Uso:
-#   ollama pull qwen3.5:9b
+#   ollama pull qwen:9b
 #   ollama create blua-qwen -f Modelfile
 #   ollama run blua-qwen
 
-FROM qwen3.5:9b
+FROM qwen:9b
 
 # Parâmetros de geração
 PARAMETER temperature 0.3

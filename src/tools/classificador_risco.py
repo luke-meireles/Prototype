@@ -1,4 +1,17 @@
-"""Tool: classificação de risco clínico (heurística determinística inspirada no Manchester)."""
+"""Tool: classificação de risco clínico (heurística determinística inspirada no Manchester).
+
+Mantida em regras fixas em Python (não LLM) por auditabilidade e para
+eliminar risco de alucinação em decisão crítica. É uma versão
+simplificada do Sistema de Triagem de Manchester — em produção,
+substituir por uma implementação validada/certificada.
+
+Lógica de decisão:
+- red flag OU score de sinais vitais ≥ 4 → CRÍTICO (vermelho, SAMU)
+- score ≥ 2 ou alto desconforto + (idoso ou polipatológico) → ALTO (laranja)
+- alto desconforto OU score == 1 → MODERADO (amarelo)
+- algum sintoma → BAIXO (verde)
+- nada → orientação educacional (azul)
+"""
 
 from __future__ import annotations
 
@@ -6,8 +19,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-# Conjunto de sintomas considerados red flag — qualquer ocorrência pula direto para
-# nível "critico" / Manchester vermelho.
+# Sintomas que disparam Manchester vermelho direto. Termos sem acento porque
+# a entrada do usuário é normalizada antes do match (ver `_normalizar`).
 _RED_FLAGS = {
     "dor toracica em esforco",
     "dor toracica intensa",
@@ -28,8 +41,7 @@ _RED_FLAGS = {
     "dor abdominal severa",
 }
 
-# Sintomas que naturalmente indicam alto desconforto, sem necessariamente
-# critico imediato — Manchester laranja/amarelo.
+# Sintomas de alto desconforto, sem crítico imediato — Manchester laranja/amarelo.
 _ALTO_DESCONFORTO = {
     "dispneia leve",
     "febre alta persistente",
@@ -48,6 +60,7 @@ class ClassificacaoInput(BaseModel):
 
 
 def _normalizar(texto: str) -> str:
+    """Remove acentos e baixa caixa para fazer match com a lista de red flags."""
     return (
         texto.lower()
         .replace("á", "a").replace("â", "a").replace("ã", "a")
@@ -61,7 +74,10 @@ def _normalizar(texto: str) -> str:
 
 
 def _avaliar_sinais_vitais(sinais: dict[str, float]) -> int:
-    """Retorna pontuação de gravidade pelos sinais vitais (0 a 4)."""
+    """Pontuação de gravidade pelos sinais vitais (0 a 4+), inspirada no NEWS2.
+
+    Faixas adultos: FC 50-110, SpO2 ≥94, PAS 90-200, FR 8-30, febre alta ≥39,5°C.
+    """
     score = 0
     fc = sinais.get("fc")
     if fc is not None and (fc < 40 or fc > 130):
@@ -96,11 +112,7 @@ def classificar_risco_clinico(
     idade: int,
     comorbidades: list[str],
 ) -> dict[str, Any]:
-    """Classifica o risco com lógica simples e auditável.
-
-    Esta é uma heurística didática para a PoC. Em produção, deveria ser uma
-    implementação validada do Sistema de Triagem de Manchester ou equivalente.
-    """
+    """Classifica o risco com lógica simples e auditável."""
     ClassificacaoInput(
         sintomas=sintomas,
         sinais_vitais=sinais_vitais,
@@ -116,7 +128,6 @@ def classificar_risco_clinico(
     fator_idade = 1 if idade >= 65 else 0
     fator_comorb = 1 if len(comorbidades) >= 2 else 0
 
-    # Decisão final
     if red_flag or score_vitais >= 4:
         nivel, manchester = "critico", "vermelho"
         tempo = "atendimento imediato — acionar SAMU 192 ou ir ao pronto-socorro mais próximo"

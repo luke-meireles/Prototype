@@ -5,7 +5,7 @@
 
 flowchart TD
     Usuario([Usuário Care Plus<br/>via app Blua]) --> Guardrails[Guardrails de Entrada<br/>filtros LGPD + sanitização]
-    Guardrails --> Roteador{Roteador de Intenção<br/>Qwen 3.5 thinking=OFF}
+    Guardrails --> Roteador{Roteador de Intenção<br/>Qwen thinking=OFF}
 
     Roteador -->|checkup| Checkup[Agente Check-up<br/>thinking=OFF]
     Roteador -->|triagem_sintoma| Triagem[Agente Triagem<br/>thinking=ON]

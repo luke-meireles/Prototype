@@ -1,4 +1,9 @@
-"""Cliente Ollama — invólucro fino sobre QwenClient para a Configuração B (on-prem)."""
+"""Cliente Ollama — wrapper fino sobre QwenClient com backend fixo em "ollama".
+
+Não funciona dentro do Colab gratuito (depende de um servidor Ollama em
+localhost). Está aqui porque a Configuração B (on-prem) é parte da
+arquitetura prevista para clientes Care Plus com isolamento total.
+"""
 
 from __future__ import annotations
 
@@ -8,10 +13,11 @@ from src.llm.qwen_client import QwenClient
 
 
 class OllamaClient(QwenClient):
-    """Mesmo contrato do QwenClient, mas fixa backend Ollama por padrão.
+    """QwenClient com backend Ollama fixado.
 
-    Essa classe existe para deixar explícito, no código consumidor, que se
-    está usando o modo on-prem — útil para auditoria de segurança/LGPD."""
+    Deixar isso explícito no código consumidor facilita auditoria — basta
+    grep por `OllamaClient` para achar todo lugar que usa on-prem.
+    """
 
     def __init__(self) -> None:
         super().__init__(backend="ollama")

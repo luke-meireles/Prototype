@@ -1,13 +1,16 @@
-"""CLI mínima para rodar o BluaDiagnostics localmente.
+"""CLI mínima do BluaDiagnostics — execução pontual fora do notebook.
+
+A forma canônica de rodar o projeto é o notebook
+`notebooks/sprint1_poc.ipynb`. Este script existe para chamadas rápidas
+via `!python main.py ...` numa célula do Colab ou em shell local.
 
 Uso:
-    python main.py                              # modo interativo, backend dashscope
-    python main.py --backend ollama             # usa Ollama local
-    python main.py --beneficiario BENEF-001     # já injeta um perfil mockado
-    python main.py --once "tenho dor lombar"    # roda um único turno e sai
-    python main.py --smoke                      # smoke test que faz 1 chamada e sai
+    !python main.py --smoke                       # ping no LLM
+    !python main.py --once "tenho dor lombar"     # 1 turno e sai
+    !python main.py --beneficiario BENEF-001      # modo interativo (local)
 
-Lê automaticamente o .env na raiz do projeto.
+O bootstrap (paths, secrets, modelo) é delegado ao `colab_setup`,
+funcionando igual em ambos ambientes.
 """
 
 from __future__ import annotations
@@ -18,16 +21,19 @@ import sys
 import uuid
 from pathlib import Path
 
-# Garante que o .env é carregado antes de qualquer import que use os.getenv
+# Permite `import src.*` sem `pip install -e .`.
 _RAIZ = Path(__file__).resolve().parent
-sys.path.insert(0, str(_RAIZ))
+if str(_RAIZ) not in sys.path:
+    sys.path.insert(0, str(_RAIZ))
 
+# Mesmo bootstrap usado pelo notebook. `exigir_chave=False` evita quebrar
+# `--help` quando a chave ainda não foi configurada.
 try:
-    from dotenv import load_dotenv
+    from colab_setup import preparar_ambiente
 
-    load_dotenv(_RAIZ / ".env", override=False)
-except ImportError:
-    print("[aviso] python-dotenv não instalado — variáveis precisam estar no shell.")
+    preparar_ambiente(exigir_chave=False)
+except Exception as exc:
+    print(f"[main] Aviso de bootstrap: {exc}")
 
 
 def _smoke_test(backend: str) -> int:
@@ -35,7 +41,10 @@ def _smoke_test(backend: str) -> int:
     from src.llm.qwen_client import chat
 
     print(f"[smoke] Backend={backend}")
-    print(f"[smoke] Modelo={os.getenv('QWEN_DASHSCOPE_MODEL') if backend=='dashscope' else os.getenv('QWEN_OLLAMA_MODEL')}")
+    print(
+        "[smoke] Modelo="
+        f"{os.getenv('QWEN_DASHSCOPE_MODEL') if backend == 'dashscope' else os.getenv('QWEN_OLLAMA_MODEL')}"
+    )
     print("[smoke] Enviando ping ao modelo...")
 
     try:
@@ -63,30 +72,27 @@ def _imprimir_dicas(backend: str, exc: Exception) -> None:
 
     if backend == "dashscope":
         if "401" in msg or "unauthor" in msg:
-            print("  - DASHSCOPE_API_KEY inválida ou expirada. Gere uma nova no console Bailian.")
+            print("  - DASHSCOPE_API_KEY inválida ou expirada. Gere uma nova no Bailian Console.")
         elif "403" in msg or "accessdenied" in msg or "unpurchased" in msg:
-            print("  - Sua conta DashScope International ainda não ativou o serviço Model Studio.")
+            print("  - Sua conta DashScope International ainda não ativou o Model Studio.")
             print("    1. Acesse https://bailian.console.alibabacloud.com/")
             print("    2. Clique em 'Activate Model Studio' / 'Free Trial'")
             print("    3. Após ativar, ganha-se 1 milhão de tokens grátis nos primeiros 90 dias.")
-            print("  - Alternativa: rodar com --backend ollama (modo on-prem).")
         elif "quota" in msg or "rate" in msg:
             print("  - Limite de quota/RPM atingido. Aguarde alguns segundos.")
+        else:
+            print("  - Verifique se o secret DASHSCOPE_API_KEY está habilitado no Colab.")
     elif backend == "ollama":
+        print("  - Ollama não está disponível por padrão no Colab — use --backend dashscope.")
         if "connection" in msg or "refused" in msg:
-            print("  - Ollama não está rodando. Instale em https://ollama.com")
-            print("  - Em seguida: `ollama pull qwen2.5:7b` e `ollama serve`.")
-        elif "model" in msg and "not found" in msg:
-            modelo = os.getenv("QWEN_OLLAMA_MODEL", "qwen3.5:9b")
-            print(f"  - Modelo '{modelo}' não baixado. Rode: `ollama pull {modelo}`")
-            print("  - Ou ajuste QWEN_OLLAMA_MODEL no .env para um modelo já presente.")
+            print("  - Em ambiente local, instale em https://ollama.com e rode 'ollama serve'.")
 
 
 def _modo_interativo(backend: str, beneficiario: str | None) -> int:
     from src.graph import construir_grafo, executar_turno
 
     print(f"BluaDiagnostics — modo interativo (backend={backend})")
-    print("Digite 'sair' para encerrar.\n")
+    print("Digite 'sair' para encerrar. (No Colab, use o notebook em vez deste modo.)\n")
 
     grafo = construir_grafo()
     thread_id = str(uuid.uuid4())
@@ -139,12 +145,12 @@ def _modo_unica_pergunta(backend: str, beneficiario: str | None, pergunta: str) 
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="CLI BluaDiagnostics")
+    parser = argparse.ArgumentParser(description="CLI BluaDiagnostics (Colab-friendly)")
     parser.add_argument(
         "--backend",
         choices=["dashscope", "ollama"],
         default=os.getenv("BLUA_BACKEND", "dashscope"),
-        help="Backend LLM (default: dashscope)",
+        help="Backend LLM (default: dashscope — único suportado no Colab)",
     )
     parser.add_argument(
         "--beneficiario",

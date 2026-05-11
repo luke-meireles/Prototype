@@ -1,4 +1,9 @@
-"""Roteador de intenção — classifica a mensagem do usuário em uma das intents."""
+"""Roteador de intenção — classifica a mensagem do usuário em uma das 5 intents.
+
+Buckets: checkup, triagem_sintoma, prescricao, duvida_geral, fora_escopo.
+Usa Qwen com thinking desligado, temperature 0.1 e saída forçada em JSON
+— classificação é tarefa rápida e queremos determinismo.
+"""
 
 from __future__ import annotations
 
@@ -43,7 +48,7 @@ def classificar_intent(
     """
     messages: list[dict[str, Any]] = [{"role": "system", "content": _PROMPT_ROTEADOR}]
     if historico:
-        # Pegamos só os 6 últimos turnos para não estourar contexto na PoC
+        # Janela dos últimos 6 turnos para não estourar contexto na PoC.
         messages.extend(historico[-6:])
     messages.append({"role": "user", "content": mensagem_usuario})
 
@@ -55,11 +60,11 @@ def classificar_intent(
         backend=backend,  # type: ignore[arg-type]
     )
 
+    # Fail-safe: em caso de JSON quebrado, caímos em duvida_geral
+    # (caminho mais conservador).
     try:
         payload = json.loads(resposta["content"])
     except json.JSONDecodeError:
-        # Fallback defensivo — se o modelo não devolver JSON válido,
-        # tratamos como dúvida geral em vez de levantar exceção.
         payload = {
             "intent": "duvida_geral",
             "confianca": 0.0,

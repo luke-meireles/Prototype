@@ -13,8 +13,17 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
+# Virtualenvs (apenas em uso local — Colab não usa)
+.venv/
+venv/
+env/
+
 # Notebooks Jupyter
 .ipynb_checkpoints/
+
+# Caches de embeddings/HF (regeneráveis, podem chegar a 1+ GB)
+.cache/
+sentence_transformers/
 
 # Logs estruturados
 logs/*.json

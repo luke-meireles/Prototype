@@ -1,4 +1,11 @@
-"""Wrapper unificado para Qwen 3.5 — backends DashScope e Ollama via OpenAI SDK."""
+"""Wrapper unificado para Qwen — backends DashScope e Ollama via OpenAI SDK.
+
+DashScope e Ollama expõem endpoint OpenAI-compatible, então o mesmo SDK
+serve para os dois. A `DASHSCOPE_API_KEY` é resolvida na ordem
+os.environ → Colab Secrets → .env. A resolução acontece dentro de
+`_build_client`, então importar este módulo não dispara leitura de
+secrets.
+"""
 
 from __future__ import annotations
 
@@ -9,32 +16,50 @@ from typing import Any, Literal
 
 from openai import OpenAI
 
-# Carregamento automático do .env na raiz do projeto. Idempotente: se o
-# usuário já exportou as variáveis no shell ou via Colab Secrets, mantemos
-# o valor atual (override=False).
-try:
-    from dotenv import load_dotenv
-
-    _ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
-    if _ENV_PATH.exists():
-        load_dotenv(_ENV_PATH, override=False)
-except ImportError:  # pragma: no cover — dotenv é opcional em produção
-    pass
-
 # Endpoints OpenAI-compatible
 _DASHSCOPE_BASE = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
 _OLLAMA_BASE_DEFAULT = "http://localhost:11434/v1"
 
 
-def _modelo_padrao(backend: str) -> str:
-    """Lê o modelo do .env no momento da chamada (não no import-time).
+def _carregar_chave_dashscope() -> str | None:
+    """Resolve DASHSCOPE_API_KEY: os.environ → Colab Secrets → .env."""
+    chave = os.getenv("DASHSCOPE_API_KEY")
+    if chave:
+        return chave
 
-    Isto evita capturar valores antes do load_dotenv quando alguém importa
-    qwen_client antes de configurar variáveis.
+    try:
+        from google.colab import userdata  # type: ignore
+
+        chave = userdata.get("DASHSCOPE_API_KEY")
+        if chave:
+            os.environ["DASHSCOPE_API_KEY"] = chave
+            return chave
+    except Exception:
+        pass
+
+    try:
+        from dotenv import load_dotenv  # type: ignore
+
+        env_path = Path(__file__).resolve().parents[2] / ".env"
+        if env_path.exists():
+            load_dotenv(env_path, override=False)
+            return os.getenv("DASHSCOPE_API_KEY")
+    except ImportError:
+        pass
+
+    return None
+
+
+def _modelo_padrao(backend: str) -> str:
+    """Lê o modelo no momento da chamada (não no import).
+
+    Necessário porque `colab_setup.preparar_ambiente()` pode rodar
+    depois do primeiro `import` deste módulo.
     """
     if backend == "dashscope":
-        return os.getenv("QWEN_DASHSCOPE_MODEL", "qwen3.5-plus")
-    return os.getenv("QWEN_OLLAMA_MODEL", "qwen3.5:9b")
+        return os.getenv("QWEN_DASHSCOPE_MODEL", "qwen-plus")
+    return os.getenv("QWEN_OLLAMA_MODEL", "qwen:9b")
+
 
 # Regex para isolar o bloco <think>...</think> e o conteúdo limpo
 _THINK_PATTERN = re.compile(r"<think>(.*?)</think>", re.DOTALL)
@@ -43,18 +68,18 @@ _THINK_PATTERN = re.compile(r"<think>(.*?)</think>", re.DOTALL)
 def _build_client(backend: Literal["dashscope", "ollama"]) -> OpenAI:
     """Constrói o client OpenAI-compatible apontando para o backend correto."""
     if backend == "dashscope":
-        api_key = os.getenv("DASHSCOPE_API_KEY")
+        api_key = _carregar_chave_dashscope()
         if not api_key:
             raise RuntimeError(
-                "DASHSCOPE_API_KEY não configurada. Defina via variável de "
-                "ambiente, .env ou Google Colab Secrets antes de chamar o "
-                "BluaDiagnostics no modo cloud."
+                "DASHSCOPE_API_KEY não configurada. No Colab, adicione-a em "
+                "Secrets (ícone 🔑) com Notebook access habilitado. Em ambiente "
+                "local, defina via shell ou crie um arquivo .env na raiz."
             )
         return OpenAI(api_key=api_key, base_url=_DASHSCOPE_BASE)
 
     if backend == "ollama":
+        # api_key é placeholder — Ollama aceita qualquer string não vazia.
         base_url = os.getenv("OLLAMA_BASE_URL", _OLLAMA_BASE_DEFAULT)
-        # Ollama aceita qualquer chave — usamos placeholder
         return OpenAI(api_key="ollama-local", base_url=base_url)
 
     raise ValueError(f"Backend desconhecido: {backend}")
@@ -63,8 +88,7 @@ def _build_client(backend: Literal["dashscope", "ollama"]) -> OpenAI:
 def _separar_thinking(content: str | None) -> tuple[str, str | None]:
     """Extrai o bloco <think> e devolve (conteúdo_limpo, thinking_ou_None).
 
-    Importante: o conteúdo do bloco <think> nunca pode ser exposto ao usuário,
-    conforme a regra inegociável do BluaDiagnostics.
+    O conteúdo do <think> nunca deve ser exposto ao usuário.
     """
     if not content:
         return "", None
@@ -92,10 +116,10 @@ def chat(
     Args:
         messages: histórico no formato OpenAI ({role, content}).
         tools: lista de tool specs no padrão OpenAI tools (opcional).
-        enable_thinking: ativa hybrid thinking mode do Qwen 3.5.
+        enable_thinking: ativa hybrid thinking mode do Qwen.
         temperature: temperatura de amostragem.
         response_format: pode ser ``{"type": "json_object"}`` para saída JSON.
-        backend: ``"dashscope"`` (cloud) ou ``"ollama"`` (on-prem).
+        backend: ``"dashscope"`` (cloud, padrão no Colab) ou ``"ollama"``.
         model: força um modelo específico — caso contrário usa default do backend.
 
     Returns:
@@ -110,7 +134,8 @@ def chat(
         "model": chosen_model,
         "messages": messages,
         "temperature": temperature,
-        # Qwen lê este campo via extra_body em endpoints OpenAI-compatible
+        # `enable_thinking` é específico do Qwen; passamos via extra_body
+        # porque não faz parte da API OpenAI padrão.
         "extra_body": {"enable_thinking": enable_thinking},
     }
     if tools:
@@ -144,7 +169,7 @@ def chat(
 
 
 class QwenClient:
-    """Versão orientada a objeto, útil quando se quer fixar o backend uma vez."""
+    """Versão OO da `chat`, útil para fixar o backend uma vez."""
 
     def __init__(self, backend: Literal["dashscope", "ollama"] = "dashscope") -> None:
         self.backend = backend
